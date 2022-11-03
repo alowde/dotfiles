@@ -30,15 +30,26 @@ parse_git_branch() {
   git branch 2> /dev/null | gsed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1)/' | awk -v len=40 '{ if (length($0) > len) print substr($0, 1, len-3) "..."; else print; }'
 }
 
-
 PS1='\u@\h:\[\033[32m\]\w\[\033[33m\]$(parse_git_branch)\[\033[00m\]$ '
 
-[[ -r "/opt/homebrew/etc/profile.d/bash_completion.sh" ]] && . "/opt/homebrew/etc/profile.d/bash_completion.sh"
+# Set PATH, MANPATH, etc., for Homebrew.
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
+if type brew &>/dev/null
+then
+  if [[ -r "${HOMEBREW_PREFIX}/etc/profile.d/bash_completion.sh" ]]
+  then
+    source "${HOMEBREW_PREFIX}/etc/profile.d/bash_completion.sh"
+  else
+    for COMPLETION in "${HOMEBREW_PREFIX}/etc/bash_completion.d/"*
+    do
+      [[ -r "${COMPLETION}" ]] && source "${COMPLETION}"
+    done
+  fi
+fi
 
 alias ansve="ansible-vault edit --vault-password-file=~/.ssh/ansible-vault"
 alias sshsock="export SSH_AUTH_SOCK=~/.ssh/auth_sock"
-
-complete -C '/usr/bin/aws_completer' aws
 
 export BASH_SILENCE_DEPRECATION_WARNING=1
 export EDITOR=nvim
